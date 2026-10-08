@@ -1,29 +1,26 @@
-# Terraform AWS Foundations
+# Python AWS Toolkit
 
-Portfolio sample: the account-level foundations I put under every workload —
-remote state, baseline tagging, a default security posture, centralized
-logging, and budget/alarms. Complements the `aws-eks-platform-terraform`
-repo, which consumes these primitives.
+Portfolio sample: practical boto3 utilities for day-to-day AWS operations —
+the kind of scripts I keep in a platform team's toolbox. Each script is
+self-contained, paginates correctly, and prints machine-readable output.
 
-## Layout
+## Scripts
 
-- `main.tf` — S3+DynamoDB remote-state backend, baseline tags, default
-  security group posture, CloudWatch log group, SNS alarm topic, AWS budget
-- `variables.tf` — account alias, region, budget limit, alert emails
-- `outputs.tf` — state bucket, log group, alarm topic
+- `s3_inventory.py` — inventory every object in a bucket (prefix, size,
+  storage class, last modified) and write a CSV report
+- `ec2_tag_audit.py` — scan EC2 instances across regions and report ones
+  missing required tags (Owner, Environment)
+- `iam_key_age.py` — list IAM users with access keys older than N days
+  (credential-hygiene check I run on a schedule)
 
-## Usage
+## Run
 
 ```bash
-terraform init -backend-config=envs/dev.backend.hcl
-terraform plan -var-file=envs/dev.tfvars
-terraform apply -var-file=envs/dev.tfvars
+pip install -r requirements.txt
+python s3_inventory.py --bucket my-bucket --out inventory.csv
+python ec2_tag_audit.py --regions us-east-1 us-west-2
+python iam_key_age.py --max-age-days 90
 ```
 
-## Patterns demonstrated
-
-- Remote state with locking and versioning (state loss is unrecoverable)
-- Mandatory tag policy inputs enforced at plan time
-- No 0.0.0.0/0 ingress in the baseline security group
-- Monthly budget with forecasted-spend alerting
-- Centralized log retention with KMS encryption
+Credentials come from the standard boto3 chain (env vars, `~/.aws/credentials`,
+or instance role) — nothing is hardcoded.
